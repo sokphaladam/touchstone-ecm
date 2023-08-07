@@ -1,20 +1,7 @@
-"use client";
-import { UserContext } from "@/context/UserContext";
 import { DashboardScreen } from "@/screen/DashboardScreen";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useContext, useEffect } from "react";
 
 export default function Home() {
-  const { push } = useRouter();
-  const { user } = useContext(UserContext);
-
-  useEffect(() => {
-    if (user?.mainRole === "SELLER") {
-      push("/seller");
-    }
-  }, [push, user]);
-
   return <DashboardScreen />;
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
