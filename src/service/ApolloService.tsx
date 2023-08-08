@@ -1,5 +1,7 @@
 "use client";
+import { TokenContext } from "@/context/TokenContext";
 import { UserContext, UserProps } from "@/context/UserContext";
+import { config_app } from "@/lib/config";
 import {
   ApolloClient,
   InMemoryCache,
@@ -29,7 +31,7 @@ const QUERY = gql`
 `;
 
 export function Apollo(token?: string | null) {
-  const endpoint = process.env.endpoint;
+  const endpoint = config_app.public.assets.url;
 
   console.log(endpoint);
 
@@ -42,14 +44,16 @@ export function Apollo(token?: string | null) {
 }
 
 export function ApolloService({ children }: { children: React.ReactNode }) {
-  const token =
-    typeof window !== undefined ? localStorage.getItem("token") : null;
+  const [token, setToken] = useState(
+    typeof window !== undefined ? localStorage.getItem("token") : null
+  );
   const [client, setClient] = useState<ApolloClient<NormalizedCacheObject>>(
     Apollo(token)
   );
   const [user, setUser] = useState<any>();
 
-  useEffect(() => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  function verifyToken() {
     client
       .query({
         query: QUERY,
@@ -69,13 +73,28 @@ export function ApolloService({ children }: { children: React.ReactNode }) {
           }
         }
       });
-  }, [client]);
+  }
+
+  useEffect(() => {
+    verifyToken();
+  }, [client, verifyToken]);
 
   return (
     <ApolloProvider client={client}>
-      <UserContext.Provider value={{ user, setUser }}>
-        {children}
-      </UserContext.Provider>
+      <TokenContext.Provider
+        value={{
+          token,
+          setToken: (v: any) => {
+            setToken(v);
+            setClient(Apollo(v));
+            verifyToken();
+          },
+        }}
+      >
+        <UserContext.Provider value={{ user, setUser }}>
+          {children}
+        </UserContext.Provider>
+      </TokenContext.Provider>
     </ApolloProvider>
   );
 }
